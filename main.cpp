@@ -159,6 +159,12 @@ class UserDB {
       user_pair.second->show();
     }
   }
+
+  ~UserDB() {
+    for (auto user_pair: users) {
+      delete user_pair.second;
+    }
+  }
 };
 
 int main() {
