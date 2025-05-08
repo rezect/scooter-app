@@ -47,6 +47,10 @@ class Station {
     scooters[s->get_id()] = s;
   }
 
+  u_int32_t get_id() {
+    return id;
+  }
+
   void show() {
     std::cout << "+------------------Station------------------+\n";
     std::cout << "ID:\t\t" << id << '\n'
@@ -61,15 +65,21 @@ class ScooterPark {
  public:
   ScooterPark() {}
 
-  void add_station(u_int32_t id, std::string name) {
-    
+  void add_station(std::string name) {
+    u_int32_t id = 0;
+    if (!stations.empty()) {
+      auto id_it = --stations.end();
+      id = (*id_it).second->get_id() + 1;
+    }
     Station* st = new Station(id, name);
     stations[id] = st;
   }
 
-  void add_scooter(u_int32_t id, u_int32_t station_id) {
-    if (stations.find(station_id) == stations.end()) {
-      throw std::runtime_error("No such sattion!");
+  void add_scooter(u_int32_t station_id) {
+    u_int32_t id = 0;
+    if (!scooters.empty()) {
+      auto id_it = --scooters.end();
+      id = (*id_it).second->get_id() + 1;
     }
     Scooter* s = new Scooter(id, station_id);
     stations[station_id]->add_scooter(s);
@@ -88,9 +98,12 @@ class ScooterPark {
 
 int main() {
   ScooterPark moscow_park;
-  moscow_park.add_station(0, "Medvedkovo");
-  moscow_park.add_scooter(0, 0);
-  moscow_park.add_scooter(1, 0);
+  moscow_park.add_station("Medvedkovo1");
+  moscow_park.add_station("Medvedkovo2");
+  moscow_park.add_scooter(0);
+  moscow_park.add_scooter(0);
+  moscow_park.add_scooter(0);
+  moscow_park.add_scooter(1);
   moscow_park.show_park();
   return 0;
 }
