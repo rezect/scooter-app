@@ -3,24 +3,26 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
+#include <cstdint>
 
 class Scooter {
   friend class ScooterPark;
   friend class Station;
   friend class User;
 
-  u_int32_t id;
+  uint32_t id;
   u_int16_t battery;
 
 protected:
   bool is_free;
-  u_int32_t station_id;
+  uint32_t station_id;
 
-  Scooter(u_int32_t id, u_int32_t station_id)
+  Scooter(uint32_t id, uint32_t station_id)
       : id(id), battery(100), is_free(true), station_id(station_id) {}
 
-  u_int32_t get_id() { return id; }
+  uint32_t get_id() { return id; }
 
   void show() {
     std::cout << "+------------------Scooter------------------+\n";
@@ -35,13 +37,13 @@ class Station {
   friend class ScooterPark;
   friend class Scooter;
 
-  u_int32_t id;
+  uint32_t id;
   std::string name;
-  std::map<u_int32_t, Scooter *> scooters;
+  std::map<uint32_t, Scooter *> scooters;
 
 protected:
-  Station(u_int32_t id, std::string name,
-          std::map<u_int32_t, Scooter *> scooters = {})
+  Station(uint32_t id, std::string name,
+          std::map<uint32_t, Scooter *> scooters = {})
       : id(id), name(name), scooters(scooters) {}
 
   void add_scooter(Scooter *s) {
@@ -52,7 +54,7 @@ protected:
     scooters[s->get_id()] = s;
   }
 
-  void remove_scooter(u_int32_t scid) {
+  void remove_scooter(uint32_t scid) {
     if (scooters.find(scid) == scooters.end()) {
       throw std::runtime_error(
           "Trying to remove not existing scooter from statation!");
@@ -60,7 +62,15 @@ protected:
     scooters.erase(scid);
   }
 
-  u_int32_t get_id() { return id; }
+  std::vector<uint32_t> get_scooters_id() {
+    std::vector<uint32_t> scids = {};
+    for (auto scooter_pair: scooters) {
+      scids.push_back(scooter_pair.second->id);
+    }
+    return scids;
+  }
+
+  uint32_t get_id() { return id; }
 
   void show() {
     std::cout << "+------------------Station------------------+\n";
@@ -72,7 +82,7 @@ class User {
   friend class ScooterPark;
 
 private:
-  u_int32_t id;
+  uint32_t id;
   std::string name;
   bool is_logged;
   double balance;
@@ -81,10 +91,10 @@ protected:
   bool is_riding;
   // std::vector<Scooter *> history;
 
-  User(u_int32_t id, std::string name)
+  User(uint32_t id, std::string name)
       : id(id), name(name), is_logged(false), balance(0) {}
 
-  u_int32_t get_id() { return id; }
+  uint32_t get_id() { return id; }
 
   void show() {
     std::cout << "+------------------User------------------+\n";
@@ -95,16 +105,16 @@ protected:
 };
 
 class ScooterPark {
-  std::map<u_int32_t, Scooter *> scooters;
-  std::map<u_int32_t, Station *> stations;
-  std::map<u_int32_t, User *> users;
+  std::map<uint32_t, Scooter *> scooters;
+  std::map<uint32_t, Station *> stations;
+  std::map<uint32_t, User *> users;
 
 public:
   ScooterPark() {}
 
   // Users
   void user_register(std::string name) {
-    u_int32_t id = 0;
+    uint32_t id = 0;
     if (!users.empty()) {
       auto id_it = users.rbegin();
       id = id_it->second->get_id() + 1;
@@ -114,7 +124,7 @@ public:
   }
 
   // TODO: Реализовать более сложную логику входа в аккаунт
-  bool user_log_in(u_int32_t uid) { return users.find(uid) != users.end(); }
+  bool user_log_in(uint32_t uid) { return users.find(uid) != users.end(); }
 
   void show_db() {
     std::cout << "\n+------------------UserDB------------------+\n";
@@ -126,7 +136,7 @@ public:
   // Scooters|Stations
 
   void add_station(std::string name) {
-    u_int32_t id = 0;
+    uint32_t id = 0;
     if (!stations.empty()) {
       auto id_it = stations.rbegin();
       id = id_it->second->get_id() + 1;
@@ -135,8 +145,8 @@ public:
     stations[id] = st;
   }
 
-  void add_scooter(u_int32_t station_id) {
-    u_int32_t id = 0;
+  void add_scooter(uint32_t station_id) {
+    uint32_t id = 0;
     if (!scooters.empty()) {
       auto id_it = scooters.rbegin();
       id = id_it->second->get_id() + 1;
@@ -145,6 +155,35 @@ public:
     stations[station_id]->add_scooter(s);
     scooters[id] = s;
   }
+
+  std::vector<uint32_t> station_scooters(uint32_t stid) {
+    if (stations.find(stid) == stations.end()) {
+      throw std::runtime_error("No such station!");
+    }
+    Station *st = stations.find(stid)->second;
+    return st->get_scooters_id();
+  }
+
+  uint32_t* scooter_info(uint32_t scid) {
+    // array : [<id>, <battery>, <is_free>, <station_id>]
+    uint32_t scinfo[4] = {0};
+    Scooter* sc = scooters.find(scid)->second;
+    scinfo[0] = sc->id;
+    scinfo[1] = sc->battery;
+    scinfo[2] = sc->is_free;
+    scinfo[3] = sc->station_id;
+    return scinfo;
+  }
+
+  // std::unordered_map<std::string, uint32_t> station_info(uint32_t stid) {
+  //   std::unordered_map<std::string, uint32_t> stinfo = {};
+  //   Station* st = stations.find(stid)->second;
+  //   stinfo["id"] = st->id;
+  //   stinfo["battery"] = st->battery;
+  //   stinfo["is_free"] = st->is_free;
+  //   stinfo["station_id"] = st->station_id;
+  //   return scinfo;
+  // }
 
   void show_park() {
     for (auto station_pair : stations) {
@@ -155,7 +194,7 @@ public:
     }
   }
 
-  void take_scooter(u_int32_t uid, u_int32_t scid) {
+  void take_scooter(uint32_t uid, uint32_t scid) {
     if (users.find(uid) == users.end() ||
         scooters.find(scid) == scooters.end()) {
       throw std::runtime_error("There are no such scooter or user!");
@@ -170,7 +209,7 @@ public:
     st->remove_scooter(sc->get_id());
   }
 
-  void return_scooter(u_int32_t uid, u_int32_t scid, u_int32_t stid) {
+  void return_scooter(uint32_t uid, uint32_t scid, uint32_t stid) {
     if (users.find(uid) == users.end() ||
         scooters.find(scid) == scooters.end()) {
       throw std::runtime_error("There are no such scooter or user!");
@@ -186,11 +225,11 @@ public:
     st->add_scooter(sc);
   }
 
-  bool is_scooter_exists(u_int32_t scid) {
+  bool is_scooter_exists(uint32_t scid) {
     return scooters.find(scid) != scooters.end();
   }
 
-  bool is_station_exists(u_int32_t stid) {
+  bool is_station_exists(uint32_t stid) {
     return stations.find(stid) != stations.end();
   }
 

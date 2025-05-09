@@ -3,12 +3,12 @@
 
 class ClientUser {
   bool is_logged;
-  u_int32_t current_user_id;
+  uint32_t current_user_id;
 
 public:
   ClientUser() : is_logged(false), current_user_id(0) {}
 
-  void log_in(u_int32_t uid, zmq::socket_t &socket) {
+  void log_in(uint32_t uid, zmq::socket_t &socket) {
     std::string uid_str = std::to_string(uid);
     char *msg = new char[4 + uid_str.size() + 1];
     msg[0] = '\0';
@@ -36,7 +36,7 @@ public:
   }
 
   // scid = scooter_id
-  void take_scooter(u_int32_t scid, zmq::socket_t &socket) {
+  void take_scooter(uint32_t scid, zmq::socket_t &socket) {
     if (!is_logged) {
       throw std::runtime_error("You are bot logged in!");
     }
@@ -61,7 +61,7 @@ public:
     std::cout << "Received: " << reply_str << '\n';
   }
 
-  void return_scooter(u_int32_t scid, u_int32_t stid, zmq::socket_t &socket) {
+  void return_scooter(uint32_t scid, uint32_t stid, zmq::socket_t &socket) {
     if (!is_logged) {
       throw std::runtime_error("You are not logged in!");
     }
@@ -106,6 +106,17 @@ public:
     std::cout << "Received: " << reply_str << '\n';
   }
 
+  void send_comand(const std::string& s, zmq::socket_t &socket) {
+    zmq::message_t request(s.c_str(), s.size());
+    socket.send(request, zmq::send_flags::none);
+
+    zmq::message_t reply;
+    socket.recv(reply);
+    std::string reply_str(static_cast<char *>(reply.data()), reply.size());
+
+    std::cout << "Received: " << reply_str << '\n';
+  }
+
   ~ClientUser() {}
 };
 
@@ -115,10 +126,10 @@ int main() {
   socket.connect("tcp://localhost:5555");
 
   ClientUser cu;
-  cu.log_in(0, socket);
-  cu.take_scooter(0, socket);
-  cu.return_scooter(0, 1, socket);
-  cu.show_park(socket);
+  std::string comand = "";
+  while (std::cin >> comand) {
+    cu.send_comand(comand, socket);
+  }
 
   return 0;
 }
