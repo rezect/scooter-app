@@ -65,7 +65,7 @@ protected:
   std::vector<uint32_t> get_scooters_id() {
     std::vector<uint32_t> scids = {};
     for (auto scooter_pair: scooters) {
-      scids.push_back(scooter_pair.second->id);
+      scids.push_back(scooter_pair.first);
     }
     return scids;
   }
